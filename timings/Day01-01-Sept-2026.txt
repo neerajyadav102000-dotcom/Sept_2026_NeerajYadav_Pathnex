@@ -1,0 +1,10 @@
+DevOps Roadmap & Concepts: Attended the live session explaining the DevOps learning path and reviewed core architectural models (Monolithic vs. Microservices).
+Video Review & Setup: Reviewed the EC2-Git instructional video to guide the GitHub account integration and local workspace setup.
+Repository Architecture: Created the tracking repository with two dedicated directories:
+
+timings/: Documents daily activities, task breakdowns, and time logs.
+
+coding-practice/: Stores hands-on scripts, Git practice files, and deployment exercises.
+AWS EC2 Provisioning: Successfully set up an Amazon Linux 2023 EC2 instance, configured VPC Route Tables with an Internet Gateway, and updated Security Group inbound rules for SSH access.
+Access Control Troubleshooting: Resolved Windows OpenSSH key permission errors (UNPROTECTED PRIVATE KEY FILE) using icacls to enforce private key security.
+EOF
