@@ -1,1 +1,84 @@
-Day 02 DevOps Pratice Log
+Day-01
+#- name: Install Nginx on Pathnex server
+# hosts: all
+# become: yes
+#  tasks:
+#   - name: Install nginx
+#     yum:
+#      name: nginx
+#       state: present
+#
+#
+#🔹 Docker
+# Docker Installation & First Container
+#docker --version
+#docker run ubuntu echo "Hello Pathnex"
+
+
+# Docker File
+#FROM ubuntu:22.04
+#CMD ["echo", "Hello Pathnex"]
+
+---
+-name: Install Nginx on pathnex server
+ hosts: all
+ became: yes
+
+ tasks:
+   -name: Install nginx
+    yum:
+      name: nginx
+      state: present
+
+
+ 🔹 Docker
+# Docker installation & First Container
+docker --version
+docker run ubuntu echo "Hello Pathnex'
+
+
+#Docker File
+FROM ubuntu:22.04
+CMD ["echo", "Hello Pathnex"]
+
+# =========================================
+#  CODE EXPLANATION
+# =========================================
+# 1. - name: Install Nginx on Pathnex server
+#    - Defines the title of the playbook run shown in execution logs.
+#
+# 2. hosts: all
+#    - Specifies that this playbook runs on all hosts listed in the inventory file.
+#
+# 3. become: yes
+#    - Elevates permissions to execute tasks with root (sudo) privileges.
+#
+# 4. tasks:
+#    - Begins the sequential list of actions to execute on target hosts.
+#
+# 5. - name: Install nginx
+#    - Descriptive label for this specific task step.
+#
+# 6. yum:
+#    - Calls Ansible's Yum/DNF package manager module for RHEL/Amazon Linux.
+#
+# 7. name: nginx
+#    - Specifies the exact target package name to install.
+#
+# 8. state: present
+#    - Ensures Nginx is installed. If absent, Ansible installs it; if present, no changes are made.
+
+# 1. docker --version
+#    - Prints the installed Docker Client and Engine versions to verify the service is active.
+#
+# 2. docker run ubuntu echo "Hello Pathnex"
+#    - Downloads (pulls) the 'ubuntu' image from Docker Hub if not locally present.
+#    - Creates and starts a container instance from the image.
+#    - Executes 'echo "Hello Pathnex"' inside the container and prints output to stdout.
+#    - Stops and terminates the container process immediately after printing.
+# 1. FROM ubuntu:22.04
+#    - Sets the official Ubuntu 22.04 LTS base image layer for building the container.
+#
+# 2. CMD ["echo", "Hello Pathnex"]
+#    - Defines the default command that automatically runs when a container starts from this image.
+
