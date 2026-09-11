@@ -1,0 +1,163 @@
+# Day 10 - Advance Kubernetes, jenkins and GitLab CI
+
+# Ansible - Create Docker Containers for Multiple Applications
+
+```yaml
+ - name: Setup Docker Container For Multiple Apps
+  hosts: all
+  become: yes
+ 
+tasks: 
+	- name: Pull Web App Image
+	 docker_image:
+	  name: Neeraj-web-app
+	  source: pull
+	
+	- name: Pull Database App Image
+	  docker_image:
+	  name: Neeraj-database-app
+	  source: pull
+
+	- name: Run Web App Container
+	  docker_container:
+		name: Neeraj-web-app
+		image: Neeraj-web-app
+		state: started
+		published_ports:
+		- "8080:80"
+
+	- name: Run Database App Container
+            docker_container:
+		name: database-app
+		image: Neeraj-database-app
+		state: started
+		published_ports:
+		- "3306:3306"
+
+# Terraform - VPC with Private and Publish Subnets
+ resource "aws_vpc" "main" {
+   cidr_block = "172.16.0.0/16"
+  }
+
+  resource "aws_subnet" "public" {
+  vpc_id		= aws_vpc.main.id  
+  cidr_block 		= "172.16.1.0/24"
+  availability_zone	= "ap-south-1a"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_subnet" "Private" {
+  vpc_id 	= aws_vpc.main.id
+  cidr_block	= "172.16.2.0/24"
+  availability_zone = "ap-south-1b"
+}
+
+# Kubernetes - Deploying Statefulset
+ apiVersion: apps/v1
+ kind: StatefulSet
+
+ metadata:
+	name: neeraj-db
+  spec:
+	serviceName: "neeraj-db"
+	replicas: 3
+
+	selector:
+	  matchLabels:
+		app: neeraj-db
+
+	template:
+	  metadata:
+	    labels:
+	      app: neeraj-db
+
+	spec:
+	  containers:
+		- name: db
+		  image: mysql:5.7
+
+		  volumeMounts:
+			- mountPath: /var/lib/mysql
+			  name: mysql-storage
+	volumeClaimTemplates:
+	  - metadat:
+	     name: mysql-storage
+
+		spec:
+		   accessModes: 
+                      - ReadWriteOnce
+
+		   resources:
+		     requests:
+			storage: 1Gi
+
+#Jenkinsfile - Build and Deploy to Kubernetes
+ pipeline {
+	agent any
+
+	environment {
+		IMAGE_NAME = 'Neeraj-web-app'
+	}
+
+	stages {
+
+	    stage('Build Docker Image') {
+	     steps {
+		script {
+		  docker.build("${env.IMAGE_NAME}")
+		}
+	     }
+	  }
+	 stage('Push Docker Image') {
+	   steps {
+	     script {
+		docker.withRegistry('https://docker.io', 'docker-credentials') {
+		  docker.image("${env.IMAGE_NAME}').push('latest')
+		}
+	     }
+	  }
+	}
+	stage('Deploy to Kubernetes') {
+	   steps {
+	     script {
+		sh 'kubectl apply -f deployment.yaml'
+	      }
+	    }
+	  }
+	}
+      }
+
+# GitLab CI/CD _ Build, Push, and Deploy
+ stages:
+  - build
+  - push
+  - deploy
+
+ build:
+    stage: build
+    script:
+    - docker build -t $CI_REGISTRY_IMAGE .
+
+
+ push:
+   stage: push
+   script:
+	- docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+	- docker push $CI_REGISTRY_IMAGE
+
+ deploy:
+   stage: deploy
+   script:
+    - kubctl apply -f kubernetes/deployment.yaml
+
+
+# Docker
+# Working Directory & COPY
+FROM ubuntu:22.04
+WORKDIR /opt/pathnex/devops-project
+COPY . /opt/pathnex/devops-project/
+CMD ["ls", "-l", "/opt/pathnex/devops-project"]
+
+# Real Path
+ /opt/pathnex/devops-project
+
