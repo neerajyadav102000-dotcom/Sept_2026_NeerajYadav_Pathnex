@@ -1,0 +1,76 @@
+# Day 23 - Serverless Architectureamd Microservices
+# Ansible - Deploy AWS Lmbda Function Using AWS CLI
+ - name: Deploy AWS Lambda Function
+   hosts: localhost
+   tasks:
+    - name: Create lambda function
+      command: aws lambda create-function --function-name icbc-lambda --runtime python3.13 --role
+ arn:aws:iam::123456789012:role/lambda-execution-role --handler lambda_function.lanbda_handler --zip-file fileb://lambda.zip
+
+# Terraform -Serverless API Gateway with Lambda Integration
+resource "aws_api_gateway_rest_api" "icbc_api" {
+  name		= "icbc_api"
+  description   = "icbc API"
+ }
+
+resource "aws_lambda_function" "lambda_integration" {
+  rest_api_id = aws_api_gateway_rest_api.icbc_api.id
+  resource_id = aws_api_gateway_Resource.icbc_resource.id
+  http_method = aws_api_gateway_method.icbc_method.http_method
+  integration_http_method = "POST"
+  type  = "AWS_PROXY"
+  uri   = aws_lambda_function.icbc_lambda.invoke_arn
+}
+
+# Kubernetes - Deploy Microservices Using Helm
+helm install icbc-microservices ./microservice-chart
+
+# jenkinsfile - Deploy Serverless Application eith Lambda
+pipeline {
+    agent any
+    stages {
+	stage('Build') {
+	  steps {
+	     echo 'Building Lambda function...'
+	     sh 'Zip -r lambda.zip lambda/'
+	   }
+	}
+	stage('Deploy to AWS Lambda') {
+	   steps {
+	     script {
+		sh 'aws lambda update-function-code --function-name icbc-lambda --zip-file fileb://lambda.zip
+	       }
+	     }
+	   }
+         }
+      }
+
+# Gitlab CI/CD - Deploy Lambda Function
+stages:
+  - build
+  - deploy
+
+build:
+   stage: build
+   script:
+    - zip - r lambda.zip lambda/
+
+deploy:
+  stage: build
+  script:
+    - aws lambda update-function-code --function-name icbc-lambda --Zip-file fileb://lambda.zip
+
+
+# Docker
+# Multi-Stage Docker Build
+# stage 1 - Build stage
+FROM maven:3.9-eclipse-temurin-17 AS builder
+WORKDIR /usr/local/tomcat/webapps
+COPY --from=builder /opt/icbc/java-build/target/*.war /usr/local/tomcat/webapps/
+EXPOSE 8080
+CMD ["catalina.sh", "run"]
+
+# Real Paths
+/opt/icbc/java-build
+ /usr/local/tomcat/webapps
+
