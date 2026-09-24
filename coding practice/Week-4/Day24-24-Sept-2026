@@ -1,0 +1,93 @@
+# Day 24  - Advance Terraform Modules and CI/CD Pipeline Scaling
+
+# Ansible - Deploy - Docker Conatiner With Kubernetes Using Helm
+
+```yaml
+ - name: Deploy Docker Container With Helm
+   hosts: localhost
+   tasks:
+     - name: Install Helm
+       command: crul httos://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+     - name: Deploy mircoservices with helm
+       command: helm install ujjivan-app ./microservice-chart
+
+# terafform - Multi-Module Infrastructure with Outputs
+module "ujjivan_vpc" {
+   source = "./vpc'
+ }
+
+module "ujjivan_instance" {
+   source = "./instance"
+   vpc_id = module.ujjivan_vpc.vpc_id
+ }
+
+output "instance_id"
+  value= module.ujjivan_instance.instance_id
+}
+
+# Kubernetes - Helm-based Auto-scaling Deployments
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: ujjivan-web-app
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: ujjivan-web-app
+  template:
+    metadata:
+       labels:
+         app: ujjivan-web-app
+      spec:
+	containers:
+	   - name: nginx
+             image: nginx
+	     ports:
+	       - conatinerPort: 80
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontelPodAutoscaler
+metadata:
+   name: ujjivan-web-app-hpa
+spec:
+  scalerTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pathnex-web-app
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 75
+
+# Jenkinsfile - Scaling CI/CD pipeline
+pipeline {
+    agent any
+    stages {
+	stage('Scale Up') {
+	  steps {
+	    echo 'Scaling up Jenkins pipeline agents for heavy workloads...'
+	    // Simulating scaling logic
+	 }
+      }
+	stage('Build') {
+  	  steps {
+	    echo 'Building project...'
+	  }
+       }
+        stage('Deploy') {
+           steps {
+	     echo 'Deploying project...'
+	   }
+	}
+     }
+  }
+
+
+# Docker
+# Healthcheck
+
+FROM nginx
+HEALTHCHECK CMD crul --fail http://localhost || exit 1
+
+
