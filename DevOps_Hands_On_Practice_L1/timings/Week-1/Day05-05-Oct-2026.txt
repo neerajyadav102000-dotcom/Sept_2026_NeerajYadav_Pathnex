@@ -1,0 +1,5 @@
+# Day 05 - Daily Activity Details.
+# 2 Hours  Docker class Revision   from January Batch
+# 30 mins Git push.
+# 3 Hours Evening class.
+#
