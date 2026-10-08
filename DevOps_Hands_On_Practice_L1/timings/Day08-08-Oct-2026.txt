@@ -1,0 +1,5 @@
+ # Day 08 - Activity Details..
+# 3 Hours EVENING class
+# 30 mins Git Push and Introduction video..
+# 3-4 Hours Kubernetes Hands On Labs..
+
