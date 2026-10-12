@@ -1,0 +1,4 @@
+# Day 08  daily Activity
+# 3-4 hours Kubernetes hands on lab and troubleshoot the node monitoring issue.
+# 3 hours Evenibg class
+ 

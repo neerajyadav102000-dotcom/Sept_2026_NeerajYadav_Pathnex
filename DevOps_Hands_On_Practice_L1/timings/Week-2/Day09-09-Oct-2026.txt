@@ -1,0 +1,6 @@
+ # Day 09 (Daily Activity details)
+# I missed the 3 days Activity. But Attending daily Evening Class from starting to End..
+# 3 hours Git Lab Pratical
+# 1-2 Hours Theory revision
+# 3 hours Eveing Classes..
+
