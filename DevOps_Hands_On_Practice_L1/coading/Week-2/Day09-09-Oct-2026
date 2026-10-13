@@ -1,0 +1,86 @@
+Day 09 - Templates, Internet gateway, ConfigMap, CPU load
+
+# Ansible - Use Jinja2 Template
+
+---
+- name: Deploy template for Pathnex
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Copy template file
+      template: 
+        src: pathnex.confi.Jinja2
+        dest: /etc/pathnex.conf
+
+# Terraform - Internet gateway
+resource "aws_internet_gateway" "PathnexIGW" {
+  vpc_id  = aws_vpc.PathnexVPC.id
+
+  tags = {
+    Name = "Pathnex-IGW"
+  }
+}
+
+# Kubernetes - Create ConfigMap
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pathnex-Configmap
+data:
+  App_MODE: "production"
+  WELCOME_MSG: "Hello Pathnex"
+
+# Shell Script- check CPU load
+#!/bin/bash
+LOAD=$(uptime | awk -f 'loag average:' '(print $10 }' | cut -d , -f1 | xargs)
+echo "Current CPU Load: $LOAD"
+
+# Artifacts and Archiving
+## Jenkins Pipeline - Archive Artifacts
+You will laern how to **save buile artifacts for future use**.
+
+pipeline {
+  agent any 
+    environment {
+      INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+      stage('Checkout') {
+        steps {
+          git url: 'https://github.com/pathnex/sample-java-app.git'
+        }
+      }
+      stage('Build') {
+        steps {
+          sh 'mvn clean package'
+        }
+      }
+      stage('Archive') {
+        steps {
+          archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        }
+      }
+    }
+  
+}
+
+# GitLab CI - ArtifactsYou will learn how to **store artifacts in GitLab CI**.
+
+stages:
+  - build 
+build:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - git clone https://github.com/pathnex/sample-java-app.git
+    - cd sample-java-app
+    - mvn clean package
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 Week
+    
+
+
