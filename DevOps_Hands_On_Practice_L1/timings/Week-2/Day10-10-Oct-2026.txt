@@ -1,0 +1,5 @@
+# Day - 10 Daily Activity details.
+# 3-4 Hours Grafana & Prometheus Lab pratical..
+# 2 hours Evening class
+# 1-2 Hours ELK Class revision ..
+
