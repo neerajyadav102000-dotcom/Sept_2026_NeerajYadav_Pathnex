@@ -1,0 +1,308 @@
+# Day 16 - Ansible Roles, DynanoDB, StatefullSet, Srvices check
+# Ansible - create Role Structure
+
+playbook.yml
+roles/
+  pathnex
+    defaults/
+      main.yml
+    handlers/
+      main.yml
+    tasks/
+      main.yml
+    templates/
+      index.html.j2
+    vars/
+      main.yml
+
+---
+- name: Deploy Pathnex Web Role
+  hosts: all
+  become: yes
+
+  roles:
+    - role: pathnex
+
+---
+httpd_package: "httpd"
+httpd_service: "httpd"
+web-hr_email: "hr@pathnex.com"
+
+---
+http_port: 80
+welcome_message: "Welcome to Pathnex DevOps training"
+
+---
+- name: Restat httpd
+  ansible.build.service:
+    name: "{{ https_service }}"
+    state: restarted
+
+#<!DOCTYPE html>
+#<html>
+#<head>
+#  <title>{{ welcome_message }}</title>
+#</head>
+#<body>
+#  <h1>{{ welcome_message }}</h1>
+#  <p>Managed by Ansible Role: pathnex</p>
+#  <p>Contact: {{ web_admin_email }}</p>
+#  <p>Server Port: {{ http_port }}</p>
+#</body>
+#</html>
+
+---
+- name: Install Apache web server
+  ansible.builtin.package:
+    name: "{{ httpd_package }}"
+    state: present
+
+- name: Deploy dynamic homepage from template
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+    owner: apache
+    group: apache
+    mode: '0644'
+  notify: Restart httpd
+
+- name: Ensure httpd is running and enabled at boot
+  ansible.builtin.service:
+    name: "{{ httpd_service }}"
+    state: started
+    enabled: yes
+
+# Terraform - DynamoDB Table with Best pratices
+# main.tf
+resource "aws_dynamodb_table" "pathnextable" {
+  name         = "pathnexTrainingTable"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "ID"
+
+  attribute {
+    name = "ID"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  tags = {
+    Name        = "pathnex_DDB"
+    Environment = "Training"
+    ManagedBy   = "Terraform"
+  }
+}
+
+# outputs.tf
+output "dynamodb_table_name" {
+  description = "The name of the DynamoDB table"
+  value       = aws_dynamodb_table.pathnextable.name
+}
+
+output "dynamodb_table_arn" {
+  description = "The ARN of the DynamoDB table"
+  value       = aws_dynamodb_table.pathnextable.arn
+}
+
+# Kubernetes - satefulSet + Headless Service & PVC
+apiVersion: v1
+kind: Service
+metadata:
+  name: pathnex
+  labels:
+    app: pathnex-db
+spec:
+  ports:
+    - port: 3306
+      name: mysql
+  clusterIP: None
+  selector:
+    app: pathnex-db
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pathnex-db
+spec:
+  serviceName: "pathnex"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pathnex-db
+  template:
+    metadata:
+      labels:
+        app: pathnex-db
+    spec:
+      containers:
+        - name: db
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pathnex-secret
+                  key: mysql-root-password
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: db-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pathnex-secret
+type: Opaque
+stringData:
+  mysql-root-password: "PathnexStrongPassword123!"
+
+# Shell Script - Robust Service check & Auto-Restart
+#!/usr/bin/env bash
+set -euo pipefail
+
+SERVICE="${1:-sshd}"
+
+echo "Checking status of service: ${SERVICE}..."
+
+if systemctl is-active --quiet "${SERVICE}"; then
+    echo "✓ [OK]: ${SERVICE} is currently running."
+    exit 0
+else
+    echo "✗ [ALERT]: ${SERVICE} is NOT running!" >&2
+    
+    # Attempt restart
+    echo "Attempting to restart ${SERVICE}..."
+    if sudo systemctl restart "${SERVICE}"; then
+        echo "✓ [RECOVERED]: ${SERVICE} was restarted successfully."
+        exit 0
+    else
+        echo "✗ [ERROR]: Failed to restart ${SERVICE}." >&2
+        exit 1
+    fi
+fi
+
+# Jenkins pipeline - Artifact Build, Stash & Promotion
+pipeline {
+    agent none
+
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+        STAGING_DIR    = "/opt/pathnex/staging"
+    }
+
+    stages {
+        stage('Build & Test') {
+            agent any
+            steps {
+                echo "Building application for ${env.INSTITUTE_NAME}..."
+                sh 'mvn clean package -DskipTests=false'
+                
+                // Archive artifacts in Jenkins
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                
+                // Stash artifact for subsequent stages
+                stash name: 'app-artifact', includes: 'target/*.jar'
+            }
+        }
+
+        stage('Approval Gate') {
+            steps {
+                // Agent is not held while waiting for human input
+                timeout(time: 24, unit: 'HOURS') {
+                    input message: "Promote build artifact to Staging?",
+                          ok: "Approve Promotion"
+                }
+            }
+        }
+
+        stage('Promote to Staging') {
+            agent any
+            steps {
+                unstash 'app-artifact'
+                script {
+                    echo "Promoting artifacts for ${env.INSTITUTE_NAME} to ${env.STAGING_DIR}..."
+                    sh '''
+                        mkdir -p ${STAGING_DIR}
+                        cp target/*.jar ${STAGING_DIR}/
+                        echo "Artifact successfully deployed to staging."
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "Pipeline failed. Review test and build logs."
+        }
+        success {
+            echo "Artifact lifecycle complete: built, approved, and promoted."
+        }
+    }
+}
+
+# GitLab CI - Full Multi-Stage Artifact Promotion Pipeline
+stages:
+  - build
+  - test
+  - promote
+
+variables:
+  INSTITUTE_NAME: "Pathnex"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+cache:
+  paths:
+    - .m2/repository
+
+build_job:
+  stage: build
+  image: maven:3.9.6-eclipse-temurin-17-alpine
+  script:
+    - echo "Compiling and packaging for $INSTITUTE_NAME..."
+    - mvn clean package -DskipTests
+  artifacts:
+    name: "pathnex-build-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - target/*.jar
+    expire_in: 1 week
+
+unit_test:
+  stage: test
+  image: maven:3.9.6-eclipse-temurin-17-alpine
+  script:
+    - mvn test
+  dependencies:
+    - build_job
+
+promote_to_staging:
+  stage: promote
+  image: alpine:latest
+  dependencies:
+    - build_job
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+      allow_failure: false
+  script:
+    - echo "Promoting artifact to staging server for $INSTITUTE_NAME..."
+    - ls -lh target/*.jar
+    - echo "Deploying target/*.jar to Nexus / Artifactory / Staging bucket..."
+
+
