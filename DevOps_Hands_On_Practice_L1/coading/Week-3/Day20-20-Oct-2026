@@ -1,0 +1,86 @@
+# Day 20 - Debug DAY
+Fix these intentionall broken files:
+
+# Ansible - Broken
+---
+- name: Install stuff
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: install
+        ansible.builtin.yum:
+          name: httpd
+            state: present
+
+# Terraform - Broken
+resource "aws_instance" "Neeraj"{
+    ami             = "ami-0abcd1234abcd1234"
+    instance_type   = "t3.micro"
+
+    tags = {
+        Name = "NeerajInstance"
+    }
+}
+
+# Kubernetes - Broken
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken-app
+
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: broken
+  template:
+    metadata:
+      labels:
+        app: broken
+    spec:
+      containers:
+        - name: app
+        image: nginx:latest
+
+
+# Secrate & Credentials
+# jenkins pipelone - using Credentails
+You will learn how to **use crendentials securely in Jenkins**.
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+        stage('Checkout'){
+            steps {
+                git url: 'https://github.com/pathnex/sample-java-app.git'
+            }
+        }
+        stage('user Secret') {
+            steps {
+                withCredentials([string(credentialsID: 'PATHNEX_API_KEY', variable:'API_KEY')]) {
+                    sh 'echo "Using secret $API_KEY for $INSTITUTE_NAME"'
+                }
+            }
+        }
+    }
+}
+
+# GitLab CI - Using CI/CD variables
+
+stages:
+  - build
+
+variables:
+  INSTITUTE_NAME: "Pathnex"
+  API_KEY: "PLACEHOLDER_SECRET"
+
+build:
+  stage: build
+  image: alpine:latest
+  script:
+    - echo "Using secret $API_KEY for $INSTITUTE_NAME"
+
