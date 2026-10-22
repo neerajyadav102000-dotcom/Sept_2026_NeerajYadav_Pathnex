@@ -1,0 +1,137 @@
+#Day 21 - SPEED TYPING (LEVEL 2)
+You must rewirte all Four From Scratch:
+# Ansible
+---
+- name: Install and Run Nginx
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install Nginx package
+      ansible.builtin.package:
+        name: nginx
+        state: present
+
+    - name: Starte and enable Nginx service
+      ansible.buitin.service:
+        name: nginx
+        state: started
+        enable: true
+
+# Terraform
+terraform {
+    required_providers {
+        aws = {
+            source = "hashicorp/aws"
+            version = "~> 5.0"
+        }
+    }
+}
+
+provider "aws" {
+    region = "ap-south-1"
+}
+resource "aws_instance" "devops"{
+    ami             = "ami-0abcd1234abcd1234"
+    instance_type   = "t3.micro"
+
+    tags = {
+         Owner = "DevopsStudent"
+    }
+}
+
+# Kubernetes
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+specs:
+  replicas: 3
+  selectors:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:lates
+          ports:
+            - containerPort: 80
+
+# Shell
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== Syatem Report ==="
+echo "Date & Time:"
+date
+
+echo -e "\nSystem Uptime:"
+uptime
+
+echo - e"\nDisk Usage:"
+df -h
+
+
+# Multiple-Environment Pipeline
+# Jenkins Pipeline - Deploy to Multiple Environments
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+        stages ( 'Deploy to Dev') {
+            steps {
+                sh 'echo "Deploying $INSTITUTE_NAME to Dev environment"'
+            }
+        }
+        stage('Deploy to Staging') {
+            steps{
+                input message: "Approve staging Deployment?"
+                sh 'echo "Deploying $INSTITUTE_NAME to Staging environment"'
+            }
+        }
+        stage('Deploy to Prod') {
+            steps {
+                input message: "Approve Prod Deployment?"
+                sh 'echo "Deploying $INSTITUTE_NAME to Prod environment"'
+            }
+        }
+    }
+}
+
+# GitLab Ci - Multi-Environment
+
+stages:
+  - deploy
+
+variables:
+  INSTITUTE_NAME: "pathnex"
+
+deploy-dev:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying $INSTITUTE_NAME to Dev environment"
+
+deploy-staging:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying $INSTITUTE_NAME to Staging environment"
+  when: manual
+
+deploy-prod:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying $INSTITUTE_NAME to Prod environment"
+  when: manual
+
